@@ -1,0 +1,13 @@
+{
+	"compilerOptions": {
+		"esModuleInterop": true,
+		"jsx": "react",
+		"module": "commonjs",
+		"moduleResolution": "node",
+		"noImplicitAny": true,
+		"outDir": "dist",
+		"removeComments": true,
+		"strict": true,
+		"target": "es6"
+	}
+}

@@ -1,0 +1,19 @@
+@import "bulma/bulma.sass";
+
+.conversation {
+	border-radius: $radius-large;
+}
+
+.has-active-border {
+	border: solid 1px $primary;
+}
+
+.chat-interface {
+	display: flex;
+	flex-direction: column;
+}
+
+.chat-conversation {
+	flex-grow: 1;
+	overflow-y: scroll;
+}
