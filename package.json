@@ -1,14 +1,14 @@
 {
   "name": "simplegpt",
   "version": "1.0.0",
-  "description": "",
+  "description": "Simple ChatGPT frontend. Does text conversation and image generation.",
   "main": "server.js",
   "scripts": {
     "serve": "ts-node src/server/index.ts",
     "build": "webpack",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Dwayne Harris <dwayne@dwayne.xyz>",
   "license": "ISC",
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.4.0",
