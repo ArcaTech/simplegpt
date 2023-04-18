@@ -11,7 +11,6 @@ export interface PromptEditorProps {
 export default function PromptEditor({ prompt, setPrompt }: PromptEditorProps) {
 	const [editing, setEditing] = useState(false);
 	const [editedPrompt, setEditedPrompt] = useState(prompt);
-	const className = "m-2 button is-small";
 
 	const getPromptField = () => {
 		if (editing) {
