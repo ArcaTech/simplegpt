@@ -52,6 +52,14 @@ export default function ChatPage() {
 		});
 	};
 
+	const setPrompt = (conversationId: string, prompt?: string) => {
+		dispatch({
+			type: 'set-conversation-prompt',
+			conversationId,
+			prompt,
+		});
+	};
+
 	const setLoading = (conversationId: string, loading: boolean) => {
 		dispatch({
 			type: 'set-conversation-loading',
@@ -110,90 +118,9 @@ export default function ChatPage() {
 						setLoading={setLoading}
 						setError={setError}
 						addMessage={addMessage}
-						updateMessage={updateMessage} />}
+						updateMessage={updateMessage}
+						setPrompt={setPrompt} />}
 			</div>
 		</div>
 	);
 }
-
-/*
-const sendChat = async (conversation: Conversation) => {
-		if (!conversation) return;
-		if (conversation.input === '') return;
-
-		const conversationId = conversation.id;
-
-		dispatch({
-			type: 'set-conversation-error',
-			conversationId,
-		});
-		dispatch({
-			type: 'set-conversation-loading',
-			conversationId,
-			loading: true,
-		});
-
-		const messageId = generateId();
-
-		const userMessage = {
-			id: messageId,
-			role: 'user',
-			handle: 'You',
-			content: conversation.input,
-			date: new Date(),
-		};
-
-		dispatch({
-			type: 'set-conversation-input',
-			conversationId,
-			input: '',
-		});
-		dispatch({
-			type: 'add-message',
-			payload: userMessage,
-		});
-		dispatch({
-			type: 'add-message-conversation',
-			conversationId,
-			messageId,
-		});
-
-		const chatMessages = messageList.map(message => {
-			return {
-				role: message.role,
-				content: message.content,
-			};
-		});
-
-		try {
-			const assistantMessage = await doChat([
-				...chatMessages,
-				userMessage,
-			]);
-			const assistantMessageId = generateId();
-
-			dispatch({
-				type: 'add-message',
-				payload: {
-					...assistantMessage,
-					id: assistantMessageId,
-					handle: 'Bot',
-				},
-			});
-			dispatch({
-				type: 'add-message-conversation',
-				conversationId,
-				messageId: assistantMessageId,
-			});
-		} catch (err) {
-			console.error(err);
-			setError('Server error');
-		}
-
-		dispatch({
-			type: 'set-conversation-loading',
-			conversationId,
-			loading: false,
-		});
-	};
-*/

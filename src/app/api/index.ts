@@ -65,7 +65,7 @@ export async function doImageGeneration(prompt: string): Promise<Image> {
 	throw new ServerError('Unknown error');
 }
 
-export async function doStream(messages: ChatMessage[]) {
+export async function doStream(messages: ChatMessage[], prompt?: string) {
 	return await fetch('http://localhost:3000/chat-stream', {
 		method: 'POST',
 		cache: 'no-cache',
@@ -74,6 +74,6 @@ export async function doStream(messages: ChatMessage[]) {
 			'Content-Type': 'application/json',
 			'Accept': 'text/event-stream',
 		},
-		body: JSON.stringify({ messages }),
+		body: JSON.stringify({ messages, prompt }),
 	});
 }

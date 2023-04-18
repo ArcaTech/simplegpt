@@ -11,7 +11,7 @@ function getConversationPreview(conversation: Conversation): string | undefined 
 	const messageCount = conversation.messages.length;
 	if (messageCount > 0) {
 		const last = conversation.messages[messageCount - 1];
-		return trunc(`${last.handle}: ${last.content}`, 20);
+		return trunc(`${last.handle}: ${last.content}`, 30);
 	}
 }
 

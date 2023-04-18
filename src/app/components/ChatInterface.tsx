@@ -2,9 +2,10 @@ import React from 'react';
 import { marked } from 'marked';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faComment, faCircleExclamation } from '@fortawesome/free-solid-svg-icons';
+import PromptEditor from './PromptEditor';
 import { Conversation, Message } from '../../types';
 import { doChat, doStream } from '../api';
-import { trunc, generateId, messagesToChatMessages } from '../helpers';
+import { generateId, messagesToChatMessages } from '../helpers';
 
 export interface ChatInterfaceProps {
 	conversation: Conversation;
@@ -13,6 +14,7 @@ export interface ChatInterfaceProps {
 	setError: (conversationId: string, error?: string) => void;
 	addMessage: (conversationId: string, message: Message) => void;
 	updateMessage: (conversationId: string, messageId: string, content: string) => void;
+	setPrompt: (conversationId: string, prompt?: string) => void;
 }
 
 export default function ChatInterface({
@@ -22,8 +24,8 @@ export default function ChatInterface({
 	setError,
 	addMessage,
 	updateMessage,
+	setPrompt,
 }: ChatInterfaceProps) {
-	const prompt = conversation.prompt ? trunc(conversation.prompt, 20) : '[No prompt set]';
 	const buttonClass = `button is-primary ${conversation.loading ? 'is-loading' : ''}`;
 
 	const sendChat = async () => {
@@ -49,7 +51,7 @@ export default function ChatInterface({
 			const assistantMessage = await doChat(messagesToChatMessages([
 				...conversation.messages,
 				userMessage,
-			]));
+			]), conversation.prompt);
 
 			addMessage(conversationId, {
 				...assistantMessage,
@@ -88,7 +90,7 @@ export default function ChatInterface({
 			const response = await doStream(messagesToChatMessages([
 				...conversation.messages,
 				userMessage,
-			]));
+			]), conversation.prompt);
 
 			const assistantMessageId = generateId();
 			addMessage(conversationId, {
@@ -119,8 +121,8 @@ export default function ChatInterface({
 
 	return (
 		<div className="chat-interface">
-			<div className="has-text-light is-size-7">{prompt}</div>
-			<div className="chat-conversation has-background-light p-2">
+			<PromptEditor prompt={conversation.prompt} setPrompt={prompt => setPrompt(conversation.id, prompt)} />
+			<div className="chat-conversation p-2">
 				{conversation.messages.map(message => {
 					return (
 						<div key={message.id} className="box">
