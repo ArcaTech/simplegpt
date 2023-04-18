@@ -1,6 +1,6 @@
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { Conversation } from '../../shared/types';
+import { Conversation } from '../../types';
 import { trunc } from '../helpers';
 
 export interface ConversationPreviewProps {
@@ -18,7 +18,7 @@ function getConversationPreview(conversation: Conversation): string | undefined 
 export default function ConversationPreview({ conversation }: ConversationPreviewProps) {
 	const preview = getConversationPreview(conversation);
 	const title = conversation.title || 'New Conversation';
-	const timestamp = `started ${formatDistanceToNow(conversation.lastUpdated)} ago`;
+	const timestamp = `started ${formatDistanceToNow(conversation.date)} ago`;
 
 	return (
 		<div>

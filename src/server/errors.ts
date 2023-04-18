@@ -1,4 +1,16 @@
-import { ServerError } from '../shared/types';
+import { validationResult, ResultFactory } from 'express-validator';
+import { ServerError, ValidationError } from '../types';
+
+export function getValidator(): ResultFactory<ValidationError> {
+	return validationResult.withDefaults({
+		formatter: error => {
+			return {
+				field: error.param,
+				message: error.msg,
+			};
+		}
+	});
+}
 
 export const apiError: ServerError = {
 	code: 'openai-api',

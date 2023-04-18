@@ -1,7 +1,7 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCirclePlus, faTrashCan } from '@fortawesome/free-solid-svg-icons';
-import { Conversation } from '../../shared/types';
+import { Conversation } from '../../types';
 import ConversationPreview from './ConversationPreview';
 
 export interface ConversationsProps {

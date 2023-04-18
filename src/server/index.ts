@@ -1,34 +1,30 @@
 import path from 'path';
 import dotenv from 'dotenv';
+import { Readable } from 'stream';
 import express, { Request } from 'express';
-import { body, validationResult, matchedData, ResultFactory } from 'express-validator';
+import { body, matchedData } from 'express-validator';
 import {
-	Configuration,
-	OpenAIApi,
-	CreateChatCompletionResponse,
 	CreateImageRequestSizeEnum,
-	ChatCompletionRequestMessage,
 	ChatCompletionRequestMessageRoleEnum,
-	ImagesResponse,
 } from 'openai';
-import { apiError, noResponseError, badRequestError } from './errors';
+import {
+	getOpenAIClient,
+	getChatCompletionRequestMessages,
+	getMessageFromChatResponse,
+	getImageFromImageResponse,
+} from './api';
+import {
+	apiError,
+	noResponseError,
+	badRequestError,
+	getValidator,
+} from './errors';
 import { defaultPrompt } from './prompts';
 import {
-	ChatMessage,
-	Image,
-	ImageGenerationApiResponse,
-	ChatApiResponse,
-	ValidationError,
-} from '../shared/types';
-
-const validator: ResultFactory<ValidationError> = validationResult.withDefaults({
-	formatter: error => {
-		return {
-			field: error.param,
-			message: error.msg,
-		};
-	}
-});
+	ImageGenerationResponse,
+	ChatResponse,
+	StreamResponse,
+} from '../types';
 
 dotenv.config();
 const app = express();
@@ -36,47 +32,21 @@ app.use(express.json());
 app.use('/static', express.static('static'));
 
 const port = process.env.SERVER_PORT ?? 3000;
-
-const openai = new OpenAIApi(new Configuration({
-	apiKey: process.env.OPENAI_KEY,
-}));
+const openai = getOpenAIClient();
+const validator = getValidator();
 
 app.get('/', (_req, res) => {
 	res.sendFile(path.resolve(__dirname, '../../static/index.html'));
 });
 
-function getMessageFromChatResponse(response: CreateChatCompletionResponse): ChatMessage | undefined {
-	if (response.choices && response.choices.length > 0) {
-		const message = response.choices[0].message;
-		if (message) {
-			return {
-				id: '',
-				role: message.role,
-				handle: 'Bot',
-				content: message.content,
-				date: new Date(),
-			};
-		}
-	}
-}
-
-function getImageFromImageResponse(response: ImagesResponse): Image | undefined {
-	if (response.data && response.data.length) {
-		const url = response.data[0].url;
-		if (url) {
-			return { url };
-		}
-	}
-}
-
 app.post(
 	'/chat',
 	body('prompt').optional().trim(),
 	body('messages').isArray(),
-	async (req: Request<{}, ChatApiResponse, {}>, res) => {
+	async (req: Request<{}, ChatResponse, {}>, res) => {
 		const result = validator(req);
 		if (!result.isEmpty()) {
-			res.send({
+			res.json({
 				error: badRequestError,
 				validationErrors: result.array(),
 			});
@@ -85,20 +55,7 @@ app.post(
 
 		const data = matchedData(req);
 		const prompt = data.prompt || defaultPrompt;
-		const messages: ChatMessage[] = data.messages;
-
-		const oaMessages: ChatCompletionRequestMessage[] = messages.filter(message => {
-			if (message.role && (message.role === 'user' || message.role === 'assistant') && message.content) {
-				return true;
-			}
-
-			return false;
-		}).map(message => {
-			return {
-				role: message.role === 'user' ? ChatCompletionRequestMessageRoleEnum.User : ChatCompletionRequestMessageRoleEnum.Assistant,
-				content: message.content,
-			};
-		});
+		const messages = getChatCompletionRequestMessages(data.messages);
 
 		try {
 			const response = await openai.createChatCompletion({
@@ -111,21 +68,98 @@ app.post(
 						role: ChatCompletionRequestMessageRoleEnum.System,
 						content: prompt,
 					},
-					...oaMessages,
+					...messages,
 				],
 			});
 
 			const message = getMessageFromChatResponse(response.data);
 
 			if (message) {
-				res.send({
+				res.json({
 					data: message,
 				});
 			} else {
-				res.send({
+				res.json({
 					error: noResponseError,
 				});
 			}
+		} catch (err) {
+			res.json({
+				error: apiError,
+			});
+		}
+	}
+);
+
+app.post(
+	'/chat-stream',
+	body('prompt').optional().trim(),
+	body('messages').isArray(),
+	async (req: Request<{}, ChatResponse, {}>, res) => {
+		const result = validator(req);
+		if (!result.isEmpty()) {
+			res.send({
+				error: badRequestError,
+				validationErrors: result.array(),
+			});
+			return;
+		}
+
+		const data = matchedData(req);
+		const prompt = data.prompt || defaultPrompt;
+		const messages = getChatCompletionRequestMessages(data.messages);
+
+		try {
+			const oaRes = await openai.createChatCompletion({
+				model: 'gpt-3.5-turbo',
+				stream: true,
+				temperature: 0.9,
+				top_p: 1,
+				n: 1,
+				messages: [
+					{
+						role: ChatCompletionRequestMessageRoleEnum.System,
+						content: prompt,
+					},
+					...messages,
+				],
+			}, {
+				responseType: 'stream',
+			});
+
+			res.writeHead(200, {
+				'Content-Type': 'text/event-stream',
+				'Connection': 'keep-alive',
+				'Cache-Control': 'no-cache',
+			});
+
+			const stream = oaRes.data as any as Readable;
+
+			stream.on('data', data => {
+				const lines = data.toString().split('\n').filter((line: string) => line.trim() !== '');
+				for (const line of lines) {
+					const message = line.replace(/^data: /, '');
+					if (message === '[DONE]') {
+						res.end();
+						return;
+					}
+					try {
+						const parsed: StreamResponse = JSON.parse(message);
+						const delta = parsed.choices[0].delta;
+						if (delta && delta.content) {
+							res.write(delta.content);
+						}
+
+						const finish = parsed.choices[0].finish_reason;
+						if (finish && finish === 'stop') {
+							res.end();
+							return;
+						}
+					} catch (err) {
+						console.error(err);
+					}
+				}
+			});
 		} catch (err) {
 			res.send({
 				error: apiError,
@@ -134,10 +168,10 @@ app.post(
 	}
 );
 
-app.post('/image', body('prompt').notEmpty(), async (req: Request<{}, ImageGenerationApiResponse, {}>, res) => {
+app.post('/image', body('prompt').notEmpty(), async (req: Request<{}, ImageGenerationResponse, {}>, res) => {
 	const result = validator(req);
 	if (!result.isEmpty()) {
-		res.send({
+		res.json({
 			error: badRequestError,
 			validationErrors: result.array(),
 		});
@@ -157,16 +191,16 @@ app.post('/image', body('prompt').notEmpty(), async (req: Request<{}, ImageGener
 		const image = getImageFromImageResponse(response.data);
 
 		if (image) {
-			res.send({
+			res.json({
 				data: image,
 			});
 		} else {
-			res.send({
+			res.json({
 				error: noResponseError,
 			});
 		}
 	} catch (err) {
-		res.send({
+		res.json({
 			error: apiError,
 		});
 	}

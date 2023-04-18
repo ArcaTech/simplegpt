@@ -2,11 +2,11 @@ import axios, { AxiosResponse } from 'axios';
 import {
 	Image,
 	ChatMessage,
-	ChatApiRequest,
-	ChatApiResponse,
-	ImageGenerationApiRequest,
-	ImageGenerationApiResponse,
-} from '../../shared/types';
+	ChatRequest,
+	ChatResponse,
+	ImageGenerationRequest,
+	ImageGenerationResponse,
+} from '../../types';
 
 export class ServerError extends Error {
 	constructor(message: string) {
@@ -27,7 +27,7 @@ export class OpenAINoResponseError extends ServerError {
 }
 
 export async function doChat(messages: ChatMessage[], prompt?: string): Promise<ChatMessage> {
-	const response = await axios.post<ChatApiResponse, AxiosResponse<ChatApiResponse, ChatApiRequest>, ChatApiRequest>('/chat', {
+	const response = await axios.post<ChatResponse, AxiosResponse<ChatResponse, ChatRequest>, ChatRequest>('/chat', {
 		messages,
 		prompt,
 	});
@@ -47,7 +47,7 @@ export async function doChat(messages: ChatMessage[], prompt?: string): Promise<
 }
 
 export async function doImageGeneration(prompt: string): Promise<Image> {
-	const response = await axios.post<ImageGenerationApiResponse, AxiosResponse<ImageGenerationApiResponse, ImageGenerationApiRequest>, ImageGenerationApiRequest>('/chat', {
+	const response = await axios.post<ImageGenerationResponse, AxiosResponse<ImageGenerationResponse, ImageGenerationRequest>, ImageGenerationRequest>('/image', {
 		prompt,
 	});
 
@@ -63,4 +63,17 @@ export async function doImageGeneration(prompt: string): Promise<Image> {
 	}
 
 	throw new ServerError('Unknown error');
+}
+
+export async function doStream(messages: ChatMessage[]) {
+	return await fetch('http://localhost:3000/chat-stream', {
+		method: 'POST',
+		cache: 'no-cache',
+		keepalive: true,
+		headers: {
+			'Content-Type': 'application/json',
+			'Accept': 'text/event-stream',
+		},
+		body: JSON.stringify({ messages }),
+	});
 }

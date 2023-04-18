@@ -1,29 +1,18 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Conversation, ChatMessage } from '../../shared/types';
+import React, { useState, useEffect, useReducer, useMemo } from 'react';
+import { Message } from '../../types';
 import Conversations from './Conversations';
 import ChatInterface from './ChatInterface';
+import { generateId } from '../helpers';
+
+import { initialConversationsState, conversationsReducer } from '../state';
 
 export default function ChatPage() {
-	const [conversations, setConversations] = useState<Conversation[]>([]);
+	const [{ conversations }, dispatch] = useReducer(conversationsReducer, initialConversationsState);
 	const [activeConversation, setActiveConversation] = useState('');
-	const conversation = useMemo(
-		() => conversations.find(conversation => conversation.id === activeConversation),
-		[conversations, activeConversation]
-	);
 
-	const switchToNewConversation = () => {
-		const id = window.crypto.randomUUID();
-		setConversations([
-			...conversations,
-			{
-				id,
-				messages: [],
-				unread: 0,
-				lastUpdated: new Date(),
-			},
-		]);
-		setActiveConversation(id);
-	};
+	const conversation = useMemo(() => {
+		return conversations.find(conversation => conversation.id === activeConversation);
+	}, [conversations, activeConversation]);
 
 	useEffect(() => {
 		if (conversations.length === 0) {
@@ -31,40 +20,76 @@ export default function ChatPage() {
 		}
 	}, []);
 
+	const switchToNewConversation = () => {
+		const id = generateId();
+		dispatch({
+			type: 'add-conversation',
+			conversationId: id,
+		});
+		setActiveConversation(id);
+	};
+
 	const switchConversations = (id: string) => {
 		setActiveConversation(id);
-		setConversations(conversations.map(conversation => {
-			return {
-				...conversation,
-				unread: 0,
-			};
-		}));
+		dispatch({
+			type: 'clear-conversation-unread',
+			conversationId: id,
+		});
 	};
 
 	const clearConversations = () => {
-		setConversations([]);
+		dispatch({
+			type: 'clear-conversations',
+		});
 		switchToNewConversation();
 	};
 
-	const addChatMessage = (id: string, message: ChatMessage) => {
-		const updatedConversations = conversations.map(conversation => {
-			if (conversation.id === id) {
-				const unread = id === activeConversation ? conversation.unread : conversation.unread + 1;
-				const messages = conversation.messages;
-				messages.push(message);
-
-				return {
-					...conversation,
-					unread,
-					lastUpdated: new Date(),
-					messages,
-				};
-			}
-
-			return conversation;
+	const setInput = (conversationId: string, input: string) => {
+		dispatch({
+			type: 'set-conversation-input',
+			conversationId,
+			input,
 		});
+	};
 
-		setConversations(updatedConversations);
+	const setLoading = (conversationId: string, loading: boolean) => {
+		dispatch({
+			type: 'set-conversation-loading',
+			conversationId,
+			loading,
+		});
+	};
+
+	const setError = (conversationId: string, error?: string) => {
+		dispatch({
+			type: 'set-conversation-error',
+			conversationId,
+			error,
+		});
+	};
+
+	const addMessage = (conversationId: string, message: Message) => {
+		dispatch({
+			type: 'add-message',
+			payload: {
+				conversationId,
+				messageId: message.id,
+				role: message.role,
+				handle: message.handle,
+				content: message.content,
+			},
+		});
+	};
+
+	const updateMessage = (conversationId: string, messageId: string, content: string) => {
+		dispatch({
+			type: 'append-message',
+			payload: {
+				conversationId,
+				messageId,
+				content,
+			}
+		});
 	};
 
 	return (
@@ -78,8 +103,97 @@ export default function ChatPage() {
 					clearConversations={clearConversations} />
 			</div>
 			<div className="column">
-				<ChatInterface conversation={conversation} addChatMessage={addChatMessage} />
+				{conversation &&
+					<ChatInterface
+						conversation={conversation}
+						setInput={setInput}
+						setLoading={setLoading}
+						setError={setError}
+						addMessage={addMessage}
+						updateMessage={updateMessage} />}
 			</div>
 		</div>
 	);
 }
+
+/*
+const sendChat = async (conversation: Conversation) => {
+		if (!conversation) return;
+		if (conversation.input === '') return;
+
+		const conversationId = conversation.id;
+
+		dispatch({
+			type: 'set-conversation-error',
+			conversationId,
+		});
+		dispatch({
+			type: 'set-conversation-loading',
+			conversationId,
+			loading: true,
+		});
+
+		const messageId = generateId();
+
+		const userMessage = {
+			id: messageId,
+			role: 'user',
+			handle: 'You',
+			content: conversation.input,
+			date: new Date(),
+		};
+
+		dispatch({
+			type: 'set-conversation-input',
+			conversationId,
+			input: '',
+		});
+		dispatch({
+			type: 'add-message',
+			payload: userMessage,
+		});
+		dispatch({
+			type: 'add-message-conversation',
+			conversationId,
+			messageId,
+		});
+
+		const chatMessages = messageList.map(message => {
+			return {
+				role: message.role,
+				content: message.content,
+			};
+		});
+
+		try {
+			const assistantMessage = await doChat([
+				...chatMessages,
+				userMessage,
+			]);
+			const assistantMessageId = generateId();
+
+			dispatch({
+				type: 'add-message',
+				payload: {
+					...assistantMessage,
+					id: assistantMessageId,
+					handle: 'Bot',
+				},
+			});
+			dispatch({
+				type: 'add-message-conversation',
+				conversationId,
+				messageId: assistantMessageId,
+			});
+		} catch (err) {
+			console.error(err);
+			setError('Server error');
+		}
+
+		dispatch({
+			type: 'set-conversation-loading',
+			conversationId,
+			loading: false,
+		});
+	};
+*/
