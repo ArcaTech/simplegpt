@@ -14,6 +14,8 @@ export function getOpenAIClient() {
 	}));
 }
 
+// The API always returns a 'choices' array of messages. Return the first (and usually only)
+// choice formatted as a ChatMessage.
 export function getMessageFromChatResponse(response: CreateChatCompletionResponse): ChatMessage | undefined {
 	if (response.choices && response.choices.length > 0) {
 		const message = response.choices[0].message;
@@ -35,6 +37,8 @@ export function getImageFromImageResponse(response: ImagesResponse): Image | und
 	}
 }
 
+// Filter the given ChatMessage list for valid roles, and then format
+// them as OpenAI ChatCompletionRequestMessage objects.
 export function getChatCompletionRequestMessages(messages: ChatMessage[]): ChatCompletionRequestMessage[] {
 	return messages.filter(message => {
 		if (message.role && (message.role === 'user' || message.role === 'assistant') && message.content) {

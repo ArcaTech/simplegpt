@@ -17,6 +17,10 @@ export interface ChatInterfaceProps {
 	setPrompt: (conversationId: string, prompt?: string) => void;
 }
 
+/**
+ * ChatInterface component.
+ * Manages the state of the active conversation.
+ */
 export default function ChatInterface({
 	conversation,
 	setInput,
@@ -28,6 +32,9 @@ export default function ChatInterface({
 }: ChatInterfaceProps) {
 	const buttonClass = `button is-primary ${conversation.loading ? 'is-loading' : ''}`;
 
+	// Sends a message to the /chat endpoint, which waits for the full
+	// response from OpenAI before returning.
+	// Not currently used.
 	const sendChat = async () => {
 		if (conversation.input === '') return;
 		const conversationId = conversation.id;
@@ -36,7 +43,7 @@ export default function ChatInterface({
 		setLoading(conversationId, true);
 
 		const messageId = generateId();
-		const userMessage = {
+		const userMessage: Message = {
 			id: messageId,
 			role: 'user',
 			handle: 'You',
@@ -48,11 +55,14 @@ export default function ChatInterface({
 		addMessage(conversationId, userMessage);
 
 		try {
+			// Send the message (including all previous messages to maintain chat history)
+			// to the backend and wait for the response
 			const assistantMessage = await doChat(messagesToChatMessages([
 				...conversation.messages,
 				userMessage,
 			]), conversation.prompt);
 
+			// Add the new message from the backend to the conversation history
 			addMessage(conversationId, {
 				...assistantMessage,
 				id: generateId(),
@@ -67,6 +77,8 @@ export default function ChatInterface({
 		setLoading(conversationId, false);
 	};
 
+	// Sends a message to the /chat-stream endpoint, which streams the
+	// response from OpenAI.
 	const sendChatStream = async () => {
 		if (conversation.input === '') return;
 		const conversationId = conversation.id;
@@ -75,7 +87,7 @@ export default function ChatInterface({
 		setLoading(conversationId, true);
 
 		const messageId = generateId();
-		const userMessage = {
+		const userMessage: Message = {
 			id: messageId,
 			role: 'user',
 			handle: 'You',
@@ -87,11 +99,15 @@ export default function ChatInterface({
 		addMessage(conversationId, userMessage);
 
 		try {
+			// Send the message (including all previous messages to maintain chat history)
+			// to the backend and get a response that can be turned into a reader
 			const response = await doStream(messagesToChatMessages([
 				...conversation.messages,
 				userMessage,
 			]), conversation.prompt);
 
+			// Create a new empty message here on the frontend
+			// that the stream response can be appended to
 			const assistantMessageId = generateId();
 			addMessage(conversationId, {
 				id: assistantMessageId,
@@ -103,6 +119,7 @@ export default function ChatInterface({
 
 			const reader = response.body?.getReader();
 			if (reader) {
+				// Wait for eternity (or at least until there's a 'done' response)
 				while (true) {
 					const { value, done } = await reader.read();
 					if (done) break;

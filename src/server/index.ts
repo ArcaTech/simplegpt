@@ -35,10 +35,12 @@ const port = process.env.SERVER_PORT ?? 3000;
 const openai = getOpenAIClient();
 const validator = getValidator();
 
+// Manually serve the one page that needs to be served
 app.get('/', (_req, res) => {
 	res.sendFile(path.resolve(__dirname, '../../static/index.html'));
 });
 
+// The /chat endpoint forwards the request to OpenAI
 app.post(
 	'/chat',
 	body('prompt').optional().trim(),
@@ -58,6 +60,8 @@ app.post(
 		const messages = getChatCompletionRequestMessages(data.messages);
 
 		try {
+			// Send the prompt (or the defaultPrompt if it's empty)
+			// and all messages from the API request to OpenAI
 			const response = await openai.createChatCompletion({
 				model: 'gpt-3.5-turbo',
 				temperature: 0.9,
@@ -74,6 +78,7 @@ app.post(
 
 			const message = getMessageFromChatResponse(response.data);
 
+			// Pass the formatted response from OpenAI back down to the frontend
 			if (message) {
 				res.json({
 					data: message,
@@ -91,6 +96,7 @@ app.post(
 	}
 );
 
+// The /chat-stream endpoint forwards the request to OpenAI
 app.post(
 	'/chat-stream',
 	body('prompt').optional().trim(),
@@ -110,7 +116,9 @@ app.post(
 		const messages = getChatCompletionRequestMessages(data.messages);
 
 		try {
-			const oaRes = await openai.createChatCompletion({
+			// Send the prompt (or the defaultPrompt if it's empty)
+			// and all messages from the API request to OpenAI
+			const ores = await openai.createChatCompletion({
 				model: 'gpt-3.5-turbo',
 				stream: true,
 				temperature: 0.9,
@@ -133,17 +141,25 @@ app.post(
 				'Cache-Control': 'no-cache',
 			});
 
-			const stream = oaRes.data as any as Readable;
+			// I found this workaround somewhere (https://db.ci/daily/5730.html)
+			const stream = ores.data as any as Readable;
 
+			// Forward the stream data from OpenAI down to the frontend
 			stream.on('data', data => {
 				const lines = data.toString().split('\n').filter((line: string) => line.trim() !== '');
 				for (const line of lines) {
+					// The stream data always starts with 'data: '
+					// Strip it before sending it to the frontend.
+					// Once the done signal is received, end our own stream
 					const message = line.replace(/^data: /, '');
 					if (message === '[DONE]') {
 						res.end();
 						return;
 					}
 					try {
+						// JSON parse the response. If there's a delta, send it
+						// to the frontend as is. If there's a finish_reason,
+						// end the stream
 						const parsed: StreamResponse = JSON.parse(message);
 						const delta = parsed.choices[0].delta;
 						if (delta && delta.content) {
@@ -168,6 +184,7 @@ app.post(
 	}
 );
 
+// The /image endpoint forwards the request to OpenAI
 app.post('/image', body('prompt').notEmpty(), async (req: Request<{}, ImageGenerationResponse, {}>, res) => {
 	const result = validator(req);
 	if (!result.isEmpty()) {

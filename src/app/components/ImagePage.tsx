@@ -5,6 +5,12 @@ import { ImageContainer } from '../../types';
 import { doImageGeneration } from '../api';
 import { generateId } from '../helpers';
 
+/**
+ * ImagePage component.
+ * Sends requests to the /images endpoint and
+ * manages the list of ImageContainers (containing the generated image
+ * and the text of the prompt that was used).
+ */
 export default function ImagePage() {
 	const [prompt, setPrompt] = useState('');
 	const [loading, setLoading] = useState(false);

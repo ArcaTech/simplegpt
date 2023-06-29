@@ -12,6 +12,11 @@ export interface ConversationsProps {
 	clearConversations: () => void;
 }
 
+/**
+ * Conversations component.
+ * Displays the list of conversations and provides the interface
+ * for creating, selecting, and removing conversations.
+ */
 export default function Conversations({
 	conversations,
 	activeConversation,

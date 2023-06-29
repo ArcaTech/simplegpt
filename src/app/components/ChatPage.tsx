@@ -6,14 +6,26 @@ import { generateId } from '../helpers';
 
 import { initialConversationsState, conversationsReducer } from '../state';
 
+/**
+ * ChatPage component.
+ * Manages the conversation content, and displays the Conversations list component and
+ * the ChatInterface component for the active conversation.
+ */
 export default function ChatPage() {
+	// This reducer manages the entire conversation (text) state.
+	// Functions that call the dispatcher are defined below and passed to
+	// the internal components.
+	// The actions and reducer for this state are defined in
+	// src/state/actions.ts and src/state/reducers.ts
 	const [{ conversations }, dispatch] = useReducer(conversationsReducer, initialConversationsState);
 	const [activeConversation, setActiveConversation] = useState('');
 
+	// Cache the active conversation
 	const conversation = useMemo(() => {
 		return conversations.find(conversation => conversation.id === activeConversation);
 	}, [conversations, activeConversation]);
 
+	// If there are no conversations on first load, create one
 	useEffect(() => {
 		if (conversations.length === 0) {
 			switchToNewConversation();

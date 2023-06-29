@@ -4,14 +4,24 @@ import { faCircleNodes, faComments, faFileImage } from '@fortawesome/free-solid-
 import ChatPage from './ChatPage';
 import ImagePage from './ImagePage';
 
+/**
+ * Main (App) component.
+ * Manages tab state and displays either the ChatPage or ImagePage
+ * components depending on the selected tab.
+ */
 export default function App() {
+	// Clicking on one of the tab headers stores that index here.
+	// The tabs are hardcoded 0 and 1, and the functions that return classes
+	// compare the hardcoded index with the stored tabIndex.
 	const [tabIndex, setTabIndex] = useState<number>(0);
 
+	// If the given tab index is the active one, return the `is-active` class name.
 	const getTabClassName = (index: number) => {
 		if (tabIndex === index) return 'is-active';
 		return '';
 	};
 
+	// If the given tab index is NOT the active one, return the 'is-hidden' class name.
 	const getContentClassName = (index: number) => {
 		if (tabIndex === index) return '';
 		return 'is-hidden';

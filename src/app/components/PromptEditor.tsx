@@ -8,7 +8,15 @@ export interface PromptEditorProps {
 	setPrompt: (prompt?: string) => void;
 }
 
+/**
+ * PromptEditor component.
+ * One per conversation. Displays either the text of the stored prompt
+ * or an input field to edit it. 
+ */
 export default function PromptEditor({ prompt, setPrompt }: PromptEditorProps) {
+	// This state is for the text that is currently being edited.
+	// Once editing is finished, setPrompt (passed in), is called to
+	// store the new prompt.
 	const [editing, setEditing] = useState(false);
 	const [editedPrompt, setEditedPrompt] = useState(prompt);
 

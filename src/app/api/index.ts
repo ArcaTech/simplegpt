@@ -27,6 +27,7 @@ export class OpenAINoResponseError extends ServerError {
 }
 
 export async function doChat(messages: ChatMessage[], prompt?: string): Promise<ChatMessage> {
+	// Note: The extensive types here aren't really necessary. I just felt like being explicit.
 	const response = await axios.post<ChatResponse, AxiosResponse<ChatResponse, ChatRequest>, ChatRequest>('/chat', {
 		messages,
 		prompt,
@@ -47,6 +48,7 @@ export async function doChat(messages: ChatMessage[], prompt?: string): Promise<
 }
 
 export async function doImageGeneration(prompt: string): Promise<Image> {
+	// Note: The extensive types here aren't really necessary. I just felt like being explicit.
 	const response = await axios.post<ImageGenerationResponse, AxiosResponse<ImageGenerationResponse, ImageGenerationRequest>, ImageGenerationRequest>('/image', {
 		prompt,
 	});
