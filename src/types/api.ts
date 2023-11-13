@@ -1,8 +1,8 @@
 import { ServerError, ValidationError } from './errors';
 
 export interface ChatMessage {
-	role: string;
-	content: string;
+	role: 'user' | 'assistant';
+	content: string | null;
 }
 
 export interface Image {
@@ -17,7 +17,8 @@ export interface ImageContainer {
 
 export interface ChatRequest {
 	messages: ChatMessage[];
-	prompt?: string;
+	systemMessage?: string;
+	model?: string;
 }
 
 export interface ChatResponse {
@@ -34,4 +35,8 @@ export interface ImageGenerationResponse {
 	data?: Image;
 	error?: ServerError;
 	validationErrors?: ValidationError[];
+}
+
+export interface ModelsResponse {
+	models: string[];
 }

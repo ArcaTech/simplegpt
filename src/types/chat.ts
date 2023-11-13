@@ -1,15 +1,16 @@
 export interface Message {
 	id: string;
-	role: string;
+	role: 'user' | 'assistant';
 	handle: string;
-	content: string;
+	content: string | null;
 	date: Date;
 }
 
 export interface Conversation {
 	id: string;
 	title?: string;
-	prompt?: string;
+	systemMessage?: string;
+	model?: string;
 	error?: string;
 	unread: number;
 	date: Date;

@@ -2,19 +2,21 @@ import React from 'react';
 import { marked } from 'marked';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faComment, faCircleExclamation } from '@fortawesome/free-solid-svg-icons';
-import PromptEditor from './PromptEditor';
+import ConversationEditor from './ConversationEditor';
 import { Conversation, Message } from '../../types';
 import { doChat, doStream } from '../api';
 import { generateId, messagesToChatMessages } from '../helpers';
 
 export interface ChatInterfaceProps {
 	conversation: Conversation;
+	modelList: string[];
 	setInput: (conversationId: string, text: string) => void;
 	setLoading: (conversationId: string, loading: boolean) => void;
 	setError: (conversationId: string, error?: string) => void;
 	addMessage: (conversationId: string, message: Message) => void;
 	updateMessage: (conversationId: string, messageId: string, content: string) => void;
-	setPrompt: (conversationId: string, prompt?: string) => void;
+	setModel: (conversationId: string, model: string) => void;
+	setSystemMessage: (conversationId: string, systemMessage?: string) => void;
 }
 
 /**
@@ -23,12 +25,14 @@ export interface ChatInterfaceProps {
  */
 export default function ChatInterface({
 	conversation,
+	modelList,
 	setInput,
 	setLoading,
 	setError,
 	addMessage,
 	updateMessage,
-	setPrompt,
+	setModel,
+	setSystemMessage,
 }: ChatInterfaceProps) {
 	const buttonClass = `button is-primary ${conversation.loading ? 'is-loading' : ''}`;
 
@@ -60,7 +64,7 @@ export default function ChatInterface({
 			const assistantMessage = await doChat(messagesToChatMessages([
 				...conversation.messages,
 				userMessage,
-			]), conversation.prompt);
+			]), conversation.systemMessage, conversation.model);
 
 			// Add the new message from the backend to the conversation history
 			addMessage(conversationId, {
@@ -104,7 +108,7 @@ export default function ChatInterface({
 			const response = await doStream(messagesToChatMessages([
 				...conversation.messages,
 				userMessage,
-			]), conversation.prompt);
+			]), conversation.systemMessage, conversation.model);
 
 			// Create a new empty message here on the frontend
 			// that the stream response can be appended to
@@ -138,12 +142,17 @@ export default function ChatInterface({
 
 	return (
 		<div className="chat-interface">
-			<PromptEditor prompt={conversation.prompt} setPrompt={prompt => setPrompt(conversation.id, prompt)} />
-			<div className="chat-conversation p-2">
-				{conversation.messages.map(message => {
+			<ConversationEditor
+				modelList={modelList}
+				selectedModel={conversation.model}
+				systemMessage={conversation.systemMessage}
+				setSelectedModel={model => setModel(conversation.id, model)}
+				setSystemMessage={message => setSystemMessage(conversation.id, message)} />
+			<div className="chat-conversation py-3">
+				{conversation.messages.filter(message => !!message.content).map(message => {
 					return (
 						<div key={message.id} className="box">
-							<div dangerouslySetInnerHTML={{ __html: marked.parse(message.content) }}></div>
+							<div dangerouslySetInnerHTML={{ __html: marked.parse(message.content!) }}></div>
 							<div className="has-text-weight-semibold mt-2">{message.handle}</div>
 						</div>
 					);
@@ -160,7 +169,7 @@ export default function ChatInterface({
 					className="textarea"
 					value={conversation.input}
 					onChange={e => setInput(conversation.id, e.target.value)}
-					placeholder="Say something if you want"
+					placeholder="Your message"
 				></textarea>
 				<br />
 				<button disabled={conversation?.loading ?? false} className={buttonClass} onClick={() => sendChatStream()}>

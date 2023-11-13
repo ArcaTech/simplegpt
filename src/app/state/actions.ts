@@ -1,9 +1,9 @@
 export interface AddMessagePayload {
 	conversationId: string;
 	messageId: string;
-	role: string;
+	role: 'user' | 'assistant';
 	handle: string;
-	content: string;
+	content: string | null;
 }
 
 export interface AppendMessagePayload {
@@ -14,7 +14,8 @@ export interface AppendMessagePayload {
 
 export type ConversationAction =
 	| { type: 'add-conversation', conversationId: string }
-	| { type: 'set-conversation-prompt', conversationId: string, prompt?: string }
+	| { type: 'set-conversation-model', conversationId: string, model: string }
+	| { type: 'set-conversation-system-message', conversationId: string, content?: string }
 	| { type: 'set-conversation-error', conversationId: string, error?: string }
 	| { type: 'set-conversation-input', conversationId: string, input: string }
 	| { type: 'set-conversation-loading', conversationId: string, loading: boolean }

@@ -6,6 +6,7 @@ import {
 	ChatResponse,
 	ImageGenerationRequest,
 	ImageGenerationResponse,
+	ModelsResponse,
 } from '../../types';
 
 export class ServerError extends Error {
@@ -26,11 +27,12 @@ export class OpenAINoResponseError extends ServerError {
 	}
 }
 
-export async function doChat(messages: ChatMessage[], prompt?: string): Promise<ChatMessage> {
+export async function doChat(messages: ChatMessage[], systemMessage?: string, model?: string): Promise<ChatMessage> {
 	// Note: The extensive types here aren't really necessary. I just felt like being explicit.
 	const response = await axios.post<ChatResponse, AxiosResponse<ChatResponse, ChatRequest>, ChatRequest>('/chat', {
 		messages,
-		prompt,
+		systemMessage,
+		model,
 	});
 
 	if (response.data.data) return response.data.data;
@@ -67,7 +69,7 @@ export async function doImageGeneration(prompt: string): Promise<Image> {
 	throw new ServerError('Unknown error');
 }
 
-export async function doStream(messages: ChatMessage[], prompt?: string) {
+export async function doStream(messages: ChatMessage[], systemMessage?: string, model?: string) {
 	return await fetch('http://localhost:3000/chat-stream', {
 		method: 'POST',
 		cache: 'no-cache',
@@ -76,6 +78,12 @@ export async function doStream(messages: ChatMessage[], prompt?: string) {
 			'Content-Type': 'application/json',
 			'Accept': 'text/event-stream',
 		},
-		body: JSON.stringify({ messages, prompt }),
+		body: JSON.stringify({ messages, systemMessage, model }),
 	});
+}
+
+export async function getModels(): Promise<string[]> {
+	const response = await axios.get<ModelsResponse>('/models');
+	if (response.data.models) return response.data.models;
+	throw new ServerError('Unknown error');
 }

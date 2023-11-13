@@ -6,6 +6,7 @@ export {
 	ChatResponse,
 	ImageGenerationRequest,
 	ImageGenerationResponse,
+	ModelsResponse,
 } from './api';
 
 export { Message, Conversation } from './chat';

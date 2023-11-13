@@ -10,6 +10,8 @@ It's just a simple ChatGPT frontend. Does text conversation and image generation
 Create an .env file in the root of the project with the following variables:
 
 - OPENAI_KEY
+- DEFAULT_CHAT_MODEL (gpt-3.5-turbo is recommended)
+- DEFAULT_IMAGE_MODEL (dall-e-2 is recommended)
 - SERVER_PORT (default 3000)
 
 

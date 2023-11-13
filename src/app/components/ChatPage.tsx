@@ -3,6 +3,7 @@ import { Message } from '../../types';
 import Conversations from './Conversations';
 import ChatInterface from './ChatInterface';
 import { generateId } from '../helpers';
+import { getModels } from '../api';
 
 import { initialConversationsState, conversationsReducer } from '../state';
 
@@ -20,6 +21,9 @@ export default function ChatPage() {
 	const [{ conversations }, dispatch] = useReducer(conversationsReducer, initialConversationsState);
 	const [activeConversation, setActiveConversation] = useState('');
 
+	// The list of available models pulled from the /models endpoint
+	const [modelList, setModelList] = useState<string[]>([]);
+
 	// Cache the active conversation
 	const conversation = useMemo(() => {
 		return conversations.find(conversation => conversation.id === activeConversation);
@@ -30,6 +34,19 @@ export default function ChatPage() {
 		if (conversations.length === 0) {
 			switchToNewConversation();
 		}
+	}, []);
+
+	// Get the list of models one time on component load
+	useEffect(() => {
+		(async () => {
+			try {
+				const models = await getModels();
+				models.sort();
+				setModelList(models.filter(model => model.includes('gpt')));
+			} catch (err) {
+				console.error(err);
+			}
+		})();
 	}, []);
 
 	const switchToNewConversation = () => {
@@ -64,11 +81,19 @@ export default function ChatPage() {
 		});
 	};
 
-	const setPrompt = (conversationId: string, prompt?: string) => {
+	const setModel = (conversationId: string, model: string) => {
 		dispatch({
-			type: 'set-conversation-prompt',
+			type: 'set-conversation-model',
 			conversationId,
-			prompt,
+			model,
+		});
+	}
+
+	const setSystemMessage = (conversationId: string, content?: string) => {
+		dispatch({
+			type: 'set-conversation-system-message',
+			conversationId,
+			content,
 		});
 	};
 
@@ -126,12 +151,14 @@ export default function ChatPage() {
 				{conversation &&
 					<ChatInterface
 						conversation={conversation}
+						modelList={modelList}
 						setInput={setInput}
 						setLoading={setLoading}
 						setError={setError}
 						addMessage={addMessage}
 						updateMessage={updateMessage}
-						setPrompt={setPrompt} />}
+						setModel={setModel}
+						setSystemMessage={setSystemMessage} />}
 			</div>
 		</div>
 	);

@@ -40,7 +40,7 @@ export default function Conversations({
 			<div>
 				{conversations.map(conversation => {
 					const isActive = conversation.id === activeConversation;
-					const className = `conversation p-2 m-2 has-background-light ${isActive ? 'has-active-border' : ''}`;
+					const className = `conversation p-2 my-2 has-background-light ${isActive ? 'has-active-border' : ''}`;
 					return (
 						<div key={conversation.id} className={className} onClick={() => setActiveConversation(conversation.id)}>
 							<ConversationPreview conversation={conversation} />

@@ -26,14 +26,27 @@ export function conversationsReducer(state: ConversationsState, action: Conversa
 					},
 				]
 			};
-		case 'set-conversation-prompt':
+		case 'set-conversation-model':
 			return {
 				...state,
 				conversations: state.conversations.map(conversation => {
 					if (conversation.id === action.conversationId) {
 						return {
 							...conversation,
-							prompt: action.prompt,
+							model: action.model,
+						};
+					}
+					return conversation;
+				}),
+			};
+		case 'set-conversation-system-message':
+			return {
+				...state,
+				conversations: state.conversations.map(conversation => {
+					if (conversation.id === action.conversationId) {
+						return {
+							...conversation,
+							systemMessage: action.content,
 						};
 					}
 					return conversation;

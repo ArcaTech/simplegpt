@@ -4,6 +4,6 @@ export interface ServerError {
 }
 
 export interface ValidationError {
-	field: string;
+	field?: string;
 	message: string;
 }

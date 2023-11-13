@@ -20,4 +20,6 @@
 .chat-conversation {
 	flex-grow: 1;
 	overflow-y: scroll;
+	padding-left: 1px;
+	padding-right: 1px;
 }

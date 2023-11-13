@@ -2,12 +2,24 @@ import { validationResult, ResultFactory } from 'express-validator';
 import { ServerError, ValidationError } from '../types';
 
 export function getValidator(): ResultFactory<ValidationError> {
-	return validationResult.withDefaults({
+	return validationResult.withDefaults<ValidationError>({
 		formatter: error => {
-			return {
-				field: error.param,
-				message: error.msg,
-			};
+			switch (error.type) {
+				case 'field':
+					return {
+						field: error.path,
+						message: error.msg,
+					};
+				case 'unknown_fields':
+					return {
+						field: error.fields.map(field => field.path).join(', '),
+						message: error.msg,
+					};
+				default:
+					return {
+						message: error.msg,
+					};
+			}
 		}
 	});
 }
