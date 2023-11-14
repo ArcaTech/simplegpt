@@ -47,7 +47,7 @@ export default function ConversationEditor({
 	};
 
 	const saveEdit = () => {
-		setEditedMessage(editedMessage);
+		setSystemMessage(editedMessage);
 		setEditing(false);
 	};
 
@@ -57,6 +57,7 @@ export default function ConversationEditor({
 	};
 
 	const clearMessage = () => {
+		setSystemMessage();
 		setEditedMessage('');
 		setEditing(false);
 	}
@@ -68,9 +69,9 @@ export default function ConversationEditor({
 			</span>
 			<span className="m-2">
 				<div className="select is-small">
-					<select onChange={e => setSelectedModel(e.target.value)}>
+					<select onChange={e => setSelectedModel(e.target.value)} value={selectedModel}>
 						<option value="">Default Model</option>
-						{modelList.map(model => <option selected={model === selectedModel} value={model}>{model}</option>)}
+						{modelList.map(model => <option key={model} value={model}>{model}</option>)}
 					</select>
 				</div>
 			</span>
