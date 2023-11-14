@@ -147,7 +147,7 @@ export default function ChatPage() {
 					newConversation={switchToNewConversation}
 					clearConversations={clearConversations} />
 			</div>
-			<div className="column">
+			<div className="column is-three-quarters">
 				{conversation &&
 					<ChatInterface
 						conversation={conversation}
