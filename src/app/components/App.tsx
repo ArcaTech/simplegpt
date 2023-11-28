@@ -31,7 +31,7 @@ export default function App() {
 		<section className="section" style={{ height: '100vh', maxHeight: '100vh' }}>
 			<h1 className="title">
 				<FontAwesomeIcon icon={faCircleNodes} />
-				SimpleGPT
+				Simple<span className="has-text-primary">GPT</span>
 			</h1>
 			<div className="tabs">
 				<ul>
