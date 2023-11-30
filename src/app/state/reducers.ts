@@ -23,6 +23,7 @@ export function conversationsReducer(state: ConversationsState, action: Conversa
 						date: new Date(),
 						loading: false,
 						input: '',
+						pendingImages: [],
 					},
 				]
 			};
@@ -91,6 +92,48 @@ export function conversationsReducer(state: ConversationsState, action: Conversa
 					return conversation;
 				}),
 			};
+		case 'add-pending-image':
+			return {
+				...state,
+				conversations: state.conversations.map(conversation => {
+					if (conversation.id === action.conversationId) {
+						return {
+							...conversation,
+							pendingImages: [
+								...conversation.pendingImages,
+								action.image,
+							]
+						};
+					}
+					return conversation;
+				}),
+			};
+		case 'remove-pending-image':
+			return {
+				...state,
+				conversations: state.conversations.map(conversation => {
+					if (conversation.id === action.conversationId) {
+						return {
+							...conversation,
+							pendingImages: conversation.pendingImages.filter(image => image.url !== action.url),
+						}
+					}
+					return conversation;
+				}),
+			};
+		case 'clear-pending-images':
+			return {
+				...state,
+				conversations: state.conversations.map(conversation => {
+					if (conversation.id === action.conversationId) {
+						return {
+							...conversation,
+							pendingImages: [],
+						};
+					}
+					return conversation;
+				}),
+			};
 		case 'clear-conversation-unread':
 			return {
 				...state,
@@ -137,6 +180,7 @@ export function conversationsReducer(state: ConversationsState, action: Conversa
 									role: action.payload.role,
 									handle: action.payload.handle,
 									content: action.payload.content,
+									images: action.payload.images,
 									date: new Date(),
 								},
 							],

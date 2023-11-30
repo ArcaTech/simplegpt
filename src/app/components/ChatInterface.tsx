@@ -1,11 +1,14 @@
 import React from 'react';
-import { marked } from 'marked';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faComment, faCircleExclamation } from '@fortawesome/free-solid-svg-icons';
 import ConversationEditor from './ConversationEditor';
+import ImageListEditor from './ImageListEditor';
+import AddImageControl from './AddImageControl';
+import MessageView from './MessageView';
 import { Conversation, Message } from '../../types';
 import { doChat, doStream } from '../api';
-import { generateId, messagesToChatMessages } from '../helpers';
+import { generateId, isVisionModel, messagesToChatMessages } from '../helpers';
+import { MessageImage } from '../../types/chat';
 
 export interface ChatInterfaceProps {
 	conversation: Conversation;
@@ -17,6 +20,9 @@ export interface ChatInterfaceProps {
 	updateMessage: (conversationId: string, messageId: string, content: string) => void;
 	setModel: (conversationId: string, model: string) => void;
 	setSystemMessage: (conversationId: string, systemMessage?: string) => void;
+	addPendingImage: (conversationId: string, image: MessageImage) => void;
+	removePendingImage: (conversationId: string, url: string) => void;
+	clearPendingImages: (conversationId: string) => void;
 }
 
 /**
@@ -33,8 +39,21 @@ export default function ChatInterface({
 	updateMessage,
 	setModel,
 	setSystemMessage,
+	addPendingImage,
+	removePendingImage,
+	clearPendingImages,
 }: ChatInterfaceProps) {
 	const buttonClass = `button is-primary ${conversation.loading ? 'is-loading' : ''}`;
+	const visionEnabled = isVisionModel(conversation.model);
+	const hasPendingImages = conversation.pendingImages.length > 0;
+
+	const onRemoveImage = (url: string) => {
+		removePendingImage(conversation.id, url);
+	};
+
+	const onAddImage = (image: MessageImage) => {
+		addPendingImage(conversation.id, image);
+	}
 
 	// Sends a message to the /chat endpoint, which waits for the full
 	// response from OpenAI before returning.
@@ -52,11 +71,13 @@ export default function ChatInterface({
 			role: 'user',
 			handle: 'You',
 			content: conversation.input,
+			images: conversation.pendingImages,
 			date: new Date(),
 		};
 
 		setInput(conversationId, '');
 		addMessage(conversationId, userMessage);
+		clearPendingImages(conversationId);
 
 		try {
 			// Send the message (including all previous messages to maintain chat history)
@@ -72,6 +93,7 @@ export default function ChatInterface({
 				id: generateId(),
 				handle: 'Bot',
 				date: new Date(),
+				images: [],
 			});
 		} catch (err) {
 			console.error(err);
@@ -96,11 +118,13 @@ export default function ChatInterface({
 			role: 'user',
 			handle: 'You',
 			content: conversation.input,
+			images: conversation.pendingImages,
 			date: new Date(),
 		};
 
 		setInput(conversationId, '');
 		addMessage(conversationId, userMessage);
+		clearPendingImages(conversationId);
 
 		try {
 			// Send the message (including all previous messages to maintain chat history)
@@ -119,6 +143,7 @@ export default function ChatInterface({
 				handle: 'Bot',
 				content: '',
 				date: new Date(),
+				images: [],
 			});
 
 			const reader = response.body?.getReader();
@@ -150,12 +175,7 @@ export default function ChatInterface({
 				setSystemMessage={message => setSystemMessage(conversation.id, message)} />
 			<div className="chat-conversation py-3">
 				{conversation.messages.filter(message => !!message.content).map(message => {
-					return (
-						<div key={message.id} className="box">
-							<div dangerouslySetInnerHTML={{ __html: marked.parse(message.content!) }}></div>
-							<div className="has-text-weight-semibold mt-2">{message.handle}</div>
-						</div>
-					);
+					return <MessageView key={message.id} message={message} />;
 				})}
 				{conversation.error && (
 					<div className="box has-text-danger">
@@ -172,10 +192,27 @@ export default function ChatInterface({
 					placeholder="Your message"
 				></textarea>
 				<br />
-				<button disabled={conversation?.loading ?? false} className={buttonClass} onClick={() => sendChatStream()}>
-					<span className="icon is-small"><FontAwesomeIcon icon={faComment} /></span>
-					<span>Send</span>
-				</button>
+				{hasPendingImages && (
+					<div className="pending-images p-2">
+						<div className="has-text-grey is-small">Pending Images</div>
+						<ImageListEditor
+							images={conversation.pendingImages}
+							onRemoveImage={onRemoveImage} />
+					</div>
+				)}
+				<div className="field is-grouped">
+					<p className="control">
+						<button
+							disabled={conversation?.loading ?? false}
+							className={buttonClass}
+							onClick={() => sendChatStream()}
+						>
+							<span className="icon is-small"><FontAwesomeIcon icon={faComment} /></span>
+							<span>Send</span>
+						</button>
+					</p>
+					{visionEnabled && <AddImageControl onAddImage={onAddImage} />}
+				</div>
 			</div>
 		</div>
 	)

@@ -1,8 +1,19 @@
 import { ServerError, ValidationError } from './errors';
 
+export interface ImageUpload {
+	name: string;
+	url: string;
+}
+
+export interface ChatImage {
+	url: string;
+	detail?: 'auto' | 'low' | 'high';
+}
+
 export interface ChatMessage {
 	role: 'user' | 'assistant';
 	content: string | null;
+	images: ChatImage[];
 }
 
 export interface Image {
@@ -39,4 +50,13 @@ export interface ImageGenerationResponse {
 
 export interface ModelsResponse {
 	models: string[];
+}
+
+export interface ImageUploadConfig {
+	enabled: boolean;
+}
+
+export interface ImageUploadResponse {
+	data?: ImageUpload;
+	error?: ServerError;
 }

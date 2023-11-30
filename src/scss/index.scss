@@ -28,6 +28,16 @@ $primary: #771abf;
 	padding-right: 1px;
 }
 
+.image-list {
+	display: flex;
+	flex-direction: row;
+}
+
+.image-list img {
+	max-height: 200px;
+	max-width: 200px;
+}
+
 code {
 	overflow-x: scroll;
 }

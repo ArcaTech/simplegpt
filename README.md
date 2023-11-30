@@ -12,7 +12,17 @@ Create an .env file in the root of the project with the following variables:
 - OPENAI_KEY
 - DEFAULT_CHAT_MODEL (gpt-3.5-turbo is recommended)
 - DEFAULT_IMAGE_MODEL (dall-e-2 is recommended)
-- SERVER_PORT (default 3000)
+- SERVER_PORT (default: 3000)
+
+If you want to use the image upload feature for GPT4-Vision, you'll also have to set the following S3 variables (for either S3 or an S3 compatible service):
+
+- S3_BUCKET_NAME
+- S3_ENDPOINT_URL
+- S3_REGION (default: us-east-1)
+- S3_ACCESS_KEY
+- S3_SECRET_KEY
+
+Note: If you use this feature, every image the user attaches will be uploaded to the bucket specified. They will NOT be deleted after use.
 
 
 ### Building the frontend

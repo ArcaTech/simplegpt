@@ -7,6 +7,9 @@ import {
 	ImageGenerationRequest,
 	ImageGenerationResponse,
 	ModelsResponse,
+	ImageUploadConfig,
+	ImageUpload,
+	ImageUploadResponse,
 } from '../../types';
 
 export class ServerError extends Error {
@@ -70,7 +73,7 @@ export async function doImageGeneration(prompt: string): Promise<Image> {
 }
 
 export async function doStream(messages: ChatMessage[], systemMessage?: string, model?: string) {
-	return await fetch('http://localhost:3000/chat-stream', {
+	return await fetch('/chat-stream', {
 		method: 'POST',
 		cache: 'no-cache',
 		keepalive: true,
@@ -82,8 +85,22 @@ export async function doStream(messages: ChatMessage[], systemMessage?: string, 
 	});
 }
 
-export async function getModels(): Promise<string[]> {
+export async function fetchModels(): Promise<string[]> {
 	const response = await axios.get<ModelsResponse>('/models');
 	if (response.data.models) return response.data.models;
+	throw new ServerError('Unknown error');
+}
+
+export async function fetchUploadEnabled(): Promise<boolean> {
+	const response = await axios.get<ImageUploadConfig>('/config/upload');
+	return response.data.enabled;
+}
+
+export async function uploadFile(file: File): Promise<ImageUpload> {
+	const response = await axios.postForm<ImageUploadResponse>('/upload', {
+		image: file,
+	});
+
+	if (response.data.data) return response.data.data;
 	throw new ServerError('Unknown error');
 }

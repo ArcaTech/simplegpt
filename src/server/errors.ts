@@ -38,3 +38,18 @@ export const badRequestError: ServerError = {
 	code: 'bad-request',
 	message: 'Bad request',
 };
+
+export const missingFileUploadError: ServerError = {
+	code: 'bad-request',
+	message: 'S3: No file to upload',
+};
+
+export const invalidUploadConfigError: ServerError = {
+	code: 'env',
+	message: 'S3: Invalid configuration',
+};
+
+export const fileUploadError: ServerError = {
+	code: 's3-api',
+	message: 'S3: API error',
+};

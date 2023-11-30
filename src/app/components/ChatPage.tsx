@@ -3,9 +3,10 @@ import { Message } from '../../types';
 import Conversations from './Conversations';
 import ChatInterface from './ChatInterface';
 import { generateId } from '../helpers';
-import { getModels } from '../api';
+import { fetchModels } from '../api';
 
 import { initialConversationsState, conversationsReducer } from '../state';
+import { MessageImage } from '../../types/chat';
 
 /**
  * ChatPage component.
@@ -40,7 +41,7 @@ export default function ChatPage() {
 	useEffect(() => {
 		(async () => {
 			try {
-				const models = await getModels();
+				const models = await fetchModels();
 				models.sort();
 				setModelList(models.filter(model => model.includes('gpt')));
 			} catch (err) {
@@ -78,6 +79,29 @@ export default function ChatPage() {
 			type: 'set-conversation-input',
 			conversationId,
 			input,
+		});
+	};
+
+	const addPendingImage = (conversationId: string, image: MessageImage) => {
+		dispatch({
+			type: 'add-pending-image',
+			conversationId,
+			image,
+		});
+	};
+
+	const removePendingImage = (conversationId: string, url: string) => {
+		dispatch({
+			type: 'remove-pending-image',
+			conversationId,
+			url,
+		});
+	};
+
+	const clearPendingImages = (conversationId: string) => {
+		dispatch({
+			type: 'clear-pending-images',
+			conversationId,
 		});
 	};
 
@@ -122,6 +146,7 @@ export default function ChatPage() {
 				role: message.role,
 				handle: message.handle,
 				content: message.content,
+				images: message.images,
 			},
 		});
 	};
@@ -158,7 +183,10 @@ export default function ChatPage() {
 						addMessage={addMessage}
 						updateMessage={updateMessage}
 						setModel={setModel}
-						setSystemMessage={setSystemMessage} />}
+						setSystemMessage={setSystemMessage}
+						addPendingImage={addPendingImage}
+						removePendingImage={removePendingImage}
+						clearPendingImages={clearPendingImages} />}
 			</div>
 		</div>
 	);
